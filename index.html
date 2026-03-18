@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno - AI Music Generation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --bg-dark: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a1;
+            --border: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a0f2e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(14, 165, 233, 0.05) 25%, rgba(14, 165, 233, 0.05) 26%, transparent 27%, transparent 74%, rgba(14, 165, 233, 0.05) 75%, rgba(14, 165, 233, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(14, 165, 233, 0.05) 25%, rgba(14, 165, 233, 0.05) 26%, transparent 27%, transparent 74%, rgba(14, 165, 233, 0.05) 75%, rgba(14, 165, 233, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 40px 0 60px 0;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 300;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            flex: 1;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+
+        .generator-section {
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .library-section {
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background: rgba(14, 165, 233, 0.05);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        select {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        select:hover {
+            border-color: var(--secondary);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--secondary);
+        }
+
+        .loading-animation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .track-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            animation: trackSlide 0.5s ease-out;
+        }
+
+        @keyframes trackSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .track-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--secondary);
+            transform: translateX(5px);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.1);
+        }
+
+        .track-header {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .track-cover {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .track-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .track-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            width: 0%;
+            animation: progress 3s ease-in-out;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .delete-btn {
+            padding: 6px 12px;
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(249, 115, 22, 0.2);
+            border-color: var(--accent);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 20px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            header {
+                padding: 30px 0 40px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">◆ SUNO</div>
+            <p class="tagline">Create unique music with AI</p>
+        </header>
+
+        <div class="main-content">
+            <div class="generator-section">
+                <h2 class="section-title">Create Song</h2>
+
+                <div class="input-group">
+                    <label>Song Description</label>
+                    <textarea id="prompt" placeholder="Describe the song you want to create... e.g., 'upbeat electronic pop with synths and catchy hooks'"></textarea>
+                </div>
+
+                <div class="options-grid">
+                    <div class="input-group">
+                        <label>Genre</label>
+                        <select id="genre">
+                            <option>Pop</option>
+                            <option>Electronic</option>
+                            <option>Hip-Hop</option>
+                            <option>Rock</option>
+                            <option>Jazz</option>
+                            <option>Ambient</option>
+                            <option>Classical</option>
+                            <option>Indie</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Duration</label>
+                        <select id="duration">
+                            <option>30 seconds</option>
+                            <option>60 seconds</option>
+                            <option>90 seconds</option>
+                            <option>2 minutes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="generateBtn" onclick="generateSong()">Generate Music</button>
+                    <button class="btn-secondary" onclick="clearForm()">Clear</button>
+                </div>
+
+                <div id="loadingContainer" style="display: none;">
+                    <div class="loading-animation">
+                        <div class="spinner"></div>
+                        <span id="loadingText">Generating your song...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="library-section">
+                <h2 class="section-title">Your Library</h2>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="songCount">0</div>
+                        <div class="stat-label">Songs Created</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalDuration">0</div>
+                        <div class="stat-label">Total Minutes</div>
+                    </div>
+                </div>
+
+                <div id="trackList"></div>
+
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">♪</div>
+                    <p>No songs yet. Create your first masterpiece!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'suno_tracks';
+
+        function generateSong() {
+            const prompt = document.getElementById('prompt').value;
+            const genre = document.getElementById('genre').value;
+            const duration = document.getElementById('duration').value;
+
+            if (!prompt.trim()) {
+                alert('Please describe your song');
+                return;
+            }
+
+            document.getElementById('loadingContainer').style.display = 'block';
+            document.getElementById('generateBtn').disabled = true;
+
+            setTimeout(() => {
+                const track = {
+                    id: Date.now(),
+                    title: generateTitle(prompt),
+                    description: prompt,
+                    genre: genre,
+                    duration: duration,
+                    created: new Date().toLocaleDateString(),
+                    plays: Math.floor(Math.random() * 1000)
+                };
+
+                let tracks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                tracks.unshift(track);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+
+                document.getElementById('prompt').value = '';
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+
+                renderTracks();
+                updateStats();
+
+                document.querySelector('.library-section').scrollIntoView({ behavior: 'smooth' });
+            }, 3000 + Math.random() * 2000);
+        }
+
+        function generateTitle(prompt) {
+            const titles = ['Neon Dreams', 'Electric Soul', 'Midnight Echo', 'Crystal Waves', 'Synthetic Heart', 'Infinity Loop', 'Digital Horizon', 'Quantum Rhythm', 'Aurora Sound', 'Stellar Journey'];
+            return titles[Math.floor(Math.random() * titles.length)];
+        }
+
+        function renderTracks() {
+            const tracks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const trackList = document.getElementById('trackList');
+            const emptyState = document.getElementById('emptyState');
+
+            trackList.innerHTML = '';
+
+            if (tracks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            tracks.forEach(track => {
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <div class="track-header">
+                        <div class="track-cover">♪</div>
+                        <div class="track-info">
+                            <div class="track-title">${track.title}</div>
+                            <div class="track-meta">${track.genre} • ${track.duration}</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-secondary);">${track.description}</div>
+                    <div class="track-controls">
+                        <button class="play-btn" onclick="playTrack(${track.id})">▶</button>
+                        <div style="flex: 1;">
+                            <div class="progress-bar" id="progress-${track.id}">
+                                <div class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTrack(${track.id})">Delete</button>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">Created ${track.created}</div>
+                `;
+                trackList.appendChild(card);
+            });
+        }
+
+        function playTrack(id) {
+            const progressBar = document.getElementById(`progress-${id}`);
+            if (progressBar) {
+                const fill = progressBar.querySelector('.progress-fill');
+                fill.style.animation = 'none';
+                setTimeout(() => {
+                    fill.style.animation = 'progress 3s ease-in-out';
+                }, 10);
+            }
+        }
+
+        function deleteTrack(id) {
+            if (confirm('Delete this track?')) {
+                let tracks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                tracks = tracks.filter(t => t.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+                renderTracks();
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            const tracks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            document.getElementById('songCount').textContent = tracks.length;
+            
+            const totalMin = tracks.reduce((sum, t) => {
+                const mins = parseInt(t.duration) || 0;
+                return sum + mins;
+            }, 0);
+            document.getElementById('totalDuration').textContent = totalMin;
+        }
+
+        function clearForm() {
+            document.getElementById('prompt').value = '';
+            document.getElementById('genre').value = 'Pop';
+            document.getElementById('duration').value = '60 seconds';
+        }
+
+        renderTracks();
+        updateStats();
+    </script>
+</body>
+</html>
